@@ -30,7 +30,7 @@ async function loginUser(){
     alert(data.message);
     currentUser = username;
     localStorage.setItem('user', username);
-    window.location.href = 'dashboard.html';
+    window.location.href = '/dashboard';
   } else alert(data.error);
 }
 
