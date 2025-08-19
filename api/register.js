@@ -1,4 +1,4 @@
-let users = {}; // simple in-memory storage
+let users = {}; // in-memory storage
 
 export default function handler(req, res) {
   if (req.method === 'POST') {
@@ -6,7 +6,7 @@ export default function handler(req, res) {
     if (!username || !password) return res.status(400).json({ error: 'Missing fields' });
     if (users[username]) return res.status(400).json({ error: 'User exists' });
     users[username] = { password, journal: [] };
-    return res.status(200).json({ message: 'Registered!' });
+    return res.status(200).json({ message: 'Registered successfully!' });
   }
   res.status(405).json({ error: 'Method not allowed' });
 }

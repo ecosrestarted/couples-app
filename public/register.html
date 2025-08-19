@@ -1,8 +1,16 @@
-<h1>Register</h1>
-<input id="username" placeholder="Username">
-<input id="password" type="password" placeholder="Password">
-<button onclick="registerUser(
-  document.getElementById('username').value,
-  document.getElementById('password').value
-)">Register</button>
-<script src="script.js"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Create Account</h1>
+  <input id="username" placeholder="Username">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="registerUser()">Register</button>
+  <br><a href="login.html">Already have an account? Login</a>
+  <script src="script.js"></script>
+</body>
+</html>
