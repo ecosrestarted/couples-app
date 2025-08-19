@@ -1,49 +1,41 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
-import json, os, hashlib
+import json, os, uuid
 
 app = Flask(__name__)
-CORS(app)
 
-DATA_FILE = "users.json"
+USERS_FILE = "users.json"
 
 def load_users():
-    if not os.path.exists(DATA_FILE):
-        return {}
-    with open(DATA_FILE, "r") as f:
-        return json.load(f)
+    if os.path.exists(USERS_FILE):
+        return json.load(open(USERS_FILE))
+    return {}
 
 def save_users(users):
-    with open(DATA_FILE, "w") as f:
-        json.dump(users, f)
+    json.dump(users, open(USERS_FILE,"w"))
 
-@app.route("/", methods=["POST"])
+@app.route("/api/register", methods=["POST"])
 def register():
     data = request.json
     username = data.get("username")
     password = data.get("password")
+    partner_code = data.get("partner_code")  # optional
 
     if not username or not password:
-        return jsonify({"error": "Missing username or password"}), 400
+        return jsonify({"error":"Missing username or password"}),400
 
     users = load_users()
     if username in users:
-        return jsonify({"error": "Username exists"}), 400
+        return jsonify({"error":"Username exists"}),400
 
-    hashed = hashlib.sha256(password.encode()).hexdigest()
-    users[username] = {"password": hashed, "journal": []}
+    code = str(uuid.uuid4())[:6]
+    users[username] = {"password":password,"partner":None,"code":code}
+
+    if partner_code:
+        for u, v in users.items():
+            if v.get("code") == partner_code:
+                users[username]["partner"]=u
+                users[u]["partner"]=username
+                break
+
     save_users(users)
-    return jsonify({"message": "Registered successfully"})
-
-# serverless handler for Vercel
-def handler(environ, start_response):
-    from werkzeug.wrappers import Request
-    request_ = Request(environ)
-    with app.test_request_context(
-        path=request_.path,
-        method=request_.method,
-        headers=request_.headers,
-        data=request_.get_data()
-    ):
-        response = app.full_dispatch_request()
-        return response(environ, start_response)
+    return jsonify({"message":"Registered","partner_code":users[username]["code"]})

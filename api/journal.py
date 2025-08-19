@@ -1,52 +1,49 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
-import json, os, hashlib
+import json, os
 
 app = Flask(__name__)
-CORS(app)
+JOURNAL_FILE = "journal.json"
+USERS_FILE = "users.json"
 
-DATA_FILE = "users.json"
+def load_journal():
+    if os.path.exists(JOURNAL_FILE):
+        return json.load(open(JOURNAL_FILE))
+    return {}
+
+def save_journal(journal):
+    json.dump(journal, open(JOURNAL_FILE,"w"))
 
 def load_users():
-    if not os.path.exists(DATA_FILE):
-        return {}
-    with open(DATA_FILE, "r") as f:
-        return json.load(f)
+    if os.path.exists(USERS_FILE):
+        return json.load(open(USERS_FILE))
+    return {}
 
-def save_users(users):
-    with open(DATA_FILE, "w") as f:
-        json.dump(users, f)
-
-@app.route("/", methods=["POST"])
+@app.route("/api/journal", methods=["POST"])
 def add_entry():
     data = request.json
     username = data.get("username")
     entry = data.get("entry")
+    if not username or not entry:
+        return jsonify({"error":"Missing username or entry"}),400
 
+    journal = load_journal()
     users = load_users()
-    if username not in users:
-        return jsonify({"error":"User not found"}), 404
+    partner = users.get(username,{}).get("partner")
 
-    users[username]["journal"].append(entry)
-    save_users(users)
+    if username not in journal: journal[username]=[]
+    journal[username].append(entry)
+
+    # Add entry to shared journal if partner exists
+    if partner:
+        if partner not in journal: journal[partner]=[]
+        journal[partner].append(f"{username}: {entry}")
+
+    save_journal(journal)
     return jsonify({"message":"Entry added"})
 
-@app.route("/", methods=["GET"])
-def get_journal():
+@app.route("/api/journal", methods=["GET"])
+def get_entries():
     username = request.args.get("username")
-    users = load_users()
-    if username not in users:
-        return jsonify({"error":"User not found"}), 404
-    return jsonify({"journal": users[username]["journal"]})
-
-def handler(environ, start_response):
-    from werkzeug.wrappers import Request
-    request_ = Request(environ)
-    with app.test_request_context(
-        path=request_.path,
-        method=request_.method,
-        headers=request_.headers,
-        data=request_.get_data()
-    ):
-        response = app.full_dispatch_request()
-        return response(environ, start_response)
+    if not username: return jsonify({"error":"Missing username"}),400
+    journal = load_journal()
+    return jsonify({"journal":journal.get(username,[])})
