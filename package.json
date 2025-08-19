@@ -1,0 +1,10 @@
+{
+  "name": "couples-app",
+  "version": "1.0.0",
+  "description": "Couples journal app for Vercel",
+  "main": "index.js",
+  "scripts": {
+    "start": "vercel dev"
+  },
+  "dependencies": {}
+}
